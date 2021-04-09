@@ -1,31 +1,33 @@
 pipeline {
-    agent any
-    tools {
-    	maven 'maven-3.6'
-    }
+    agent none
     stages {
-    	stage("build jar") {
+    	stage("test") {
             steps {
                 script {
-                    echo "building the application..."
-                    sh 'mvn package'
+                    echo "Testing the application..."
+                    echo "Executing pipeline for branch $BRANCH_NAME"
                 }
             }
         }
-        stage("build image") {
+        stage("build") {
+            when {
+                expression {
+                    BRANCH_NAME == 'master'   
+                }
+            }
             steps {
                 script {
-                    echo "building the docker image"
-                    withCredentials([usernamePassword(credentialsId: 'docker-hub-repo', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
-                    	sh 'docker build -t dharp3r/java-maven-app:jma-2.0 .'
-                    	sh "echo $PASS | docker login -u $USER --password-stdin"
-                    	sh 'docker push dharp3r/java-maven-app:jma-2.0'
-                    }
+                    echo "Building the application..."
                 }
             }
         }
 
         stage("deploy") {
+            when {
+                expression {
+                    BRANCH_NAME == 'master'   
+                }
+            }
             steps {
                 script {
                     echo "deploying the application..."
